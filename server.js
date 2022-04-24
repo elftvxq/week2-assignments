@@ -13,10 +13,19 @@ const DB = process.env.DATABASE.replace(
   process.env.DATABASE_PASSWORD
 );
 
+// mongoose
+//   .connect(DB)
+//   .then(() => {
+//     console.log('連線成功');
+//   })
+//   .catch((error) => {
+//     console.log(error);
+//   });
+
 mongoose
-  .connect(DB)
+  .connect('mongodb://localhost:27017/test')
   .then(() => {
-    console.log('連線成功');
+    console.log('資料庫連線成功');
   })
   .catch((error) => {
     console.log(error);
@@ -28,7 +37,7 @@ const requestListener = async (req, res) => {
     body += chunk;
   });
 
-  if (req.url == '/posts' && req.method == 'GET') {
+  if (req.url === '/posts' && req.method === 'GET') {
     const allPosts = await Posts.find();
     handleSuccess(res, allPosts);
     res.end();
@@ -43,21 +52,25 @@ const requestListener = async (req, res) => {
             content: data.content,
             tags: data.tags,
             type: data.type,
+            likes: data.likes,
+            image: data.image,
+            comments: data.comments,
           });
           handleSuccess(res, newPost);
         } else {
-          handleError(res);
+          handleError(res, error);
         }
       } catch (error) {
-        handleError(res, err);
+        handleError(res, error);
       }
     });
   } else if (req.url === '/posts' && req.method === 'DELETE') {
     const posts = await Posts.deleteMany({});
-    successHandler(res, posts);
-  } else if (req.url.startWith('/posts/') && req.method === 'DELETE') {
+    handleSuccess(res, posts);
+  } else if (req.url.startsWith('/posts/') && req.method === 'DELETE') {
     const id = req.url.split('/').pop();
-    const posts = await Post.findByIdAndDelete(id);
+    console.log(id, 'ID');
+    const posts = await Posts.findByIdAndDelete(id);
 
     res.writeHead(200, headers);
     handleSuccess(res, posts);
@@ -68,18 +81,21 @@ const requestListener = async (req, res) => {
         const data = JSON.parse(body);
         const id = req.url.split('/').pop();
         if (data.content !== '') {
-          let { content, image, likes } = data;
+          let { content, image, likes, comments } = data;
           const posts = await Posts.findByIdAndUpdate(id, {
             $set: {
               content,
+              image,
+              likes,
+              comments,
             },
           });
-          successHandler(res, posts);
+          handleSuccess(res, posts);
         } else {
-          errorHandler(res, 400, 'content必填');
+          handleError(res, err);
         }
       } catch (err) {
-        errorHandler(res, 400, '資料錯誤');
+        handleError(res, err);
       }
     });
   } else if (req.method === 'OPTIONS') {
