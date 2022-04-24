@@ -57,11 +57,10 @@ const requestListener = async (req, res) => {
     successHandler(res, posts);
   } else if (req.url.startWith('/posts/') && req.method === 'DELETE') {
     const id = req.url.split('/').pop();
-    await Posts.findByIdAndDelete(id);
+    const posts = await Post.findByIdAndDelete(id);
 
-    const posts = await Posts.deleteMany({});
     res.writeHead(200, headers);
-    handleSuccess(res, null);
+    handleSuccess(res, posts);
     res.end();
   } else if (req.url.startsWith('/posts/') && req.method === 'PATCH') {
     req.on('end', async () => {
