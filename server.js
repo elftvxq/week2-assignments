@@ -52,7 +52,10 @@ const requestListener = async (req, res) => {
         handleError(res, err);
       }
     });
-  } else if (req.url.startWith('/posts') && req.method === 'DELETE') {
+  } else if (req.url === '/posts' && req.method === 'DELETE') {
+    const posts = await Post.deleteMany({});
+    successHandler(res, posts);
+  } else if (req.url.startWith('/posts/') && req.method === 'DELETE') {
     const id = req.url.split('/').pop();
     await Posts.findByIdAndDelete(id);
 
@@ -60,6 +63,26 @@ const requestListener = async (req, res) => {
     res.writeHead(200, headers);
     handleSuccess(res, null);
     res.end();
+  } else if (req.url.startsWith('/posts/') && req.method === 'PATCH') {
+    req.on('end', async () => {
+      try {
+        const data = JSON.parse(body);
+        const id = req.url.split('/').pop();
+        if (data.content !== '') {
+          let { content, image, likes } = data;
+          const posts = await Posts.findByIdAndUpdate(id, {
+            $set: {
+              content,
+            },
+          });
+          successHandler(res, posts);
+        } else {
+          errorHandler(res, 400, 'content必填');
+        }
+      } catch (err) {
+        errorHandler(res, 400, '資料錯誤');
+      }
+    });
   } else if (req.method === 'OPTIONS') {
     res.writeHead(200, headers);
     res.end();
