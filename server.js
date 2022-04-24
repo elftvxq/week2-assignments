@@ -53,7 +53,7 @@ const requestListener = async (req, res) => {
       }
     });
   } else if (req.url === '/posts' && req.method === 'DELETE') {
-    const posts = await Post.deleteMany({});
+    const posts = await Posts.deleteMany({});
     successHandler(res, posts);
   } else if (req.url.startWith('/posts/') && req.method === 'DELETE') {
     const id = req.url.split('/').pop();
